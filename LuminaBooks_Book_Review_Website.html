@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuminaBooks | Your Digital Library</title>
+    <style>
+        :root {
+            --primary: #6d5dfc;
+            --bg: #f0f2f5;
+            --text: #2d3436;
+            --white: #ffffff;
+            --shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+
+        body { background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* Navigation */
+        nav {
+            background: var(--primary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            color: white;
+        }
+
+        .nav-links button {
+            background: none;
+            border: none;
+            color: white;
+            margin-left: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Views */
+        .view { display: none; padding: 2rem 5%; min-height: 80vh; }
+        .view.active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Home Page */
+        .hero { text-align: center; padding: 4rem 1rem; }
+        .hero h1 { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* Book Grid */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .book-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .book-card:hover { transform: translateY(-5px); }
+        .book-card h3 { margin: 10px 0; }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Profile Section */
+        .profile-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .bucket-list { list-style: none; }
+
+        .bucket-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .btn-remove {
+            color: #ff7675;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h2>LuminaBooks</h2>
+        <div class="nav-links">
+            <button onclick="showView('home')">Home</button>
+            <button onclick="showView('library')">Browse Books</button>
+            <button onclick="showView('profile')">My Profile</button>
+        </div>
+    </nav>
+
+    <!-- Home View -->
+    <section id="home" class="view active">
+        <div class="hero">
+            <h1>Discover Your Next Favorite Read</h1>
+            <p>Track your progress, review bestsellers, and manage your personal bucket list.</p>
+        </div>
+    </section>
+
+    <!-- Library View -->
+    <section id="library" class="view">
+        <h2>All Books</h2>
+        <div class="book-grid" id="book-container">
+            <!-- Books will be injected here by JS -->
+        </div>
+    </section>
+
+    <!-- Profile View -->
+    <section id="profile" class="view">
+        <div class="profile-header">
+            <h2>User Profile</h2>
+            <p>Member since: May 2024</p>
+        </div>
+
+        <h3>My Bucket List (<span id="count">0</span>)</h3>
+
+        <div id="bucket-list-container" class="bucket-list">
+            <!-- Bucket items will appear here -->
+        </div>
+    </section>
+
+    <script>
+        // 1. Data Store
+        const books = [
+            { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Classic" },
+            { id: 2, title: "Atomic Habits", author: "James Clear", genre: "Self-Help" },
+            { id: 3, title: "Project Hail Mary", author: "Andy Weir", genre: "Sci-Fi" },
+            { id: 4, title: "The Silent Patient", author: "Alex Michaelides", genre: "Thriller" },
+            { id: 5, title: "Circe", author: "Madeline Miller", genre: "Fantasy" }
+        ];
+
+        let bucketList = JSON.parse(localStorage.getItem('myBucketList')) || [];
+
+        // 2. Navigation Logic
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // 3. Render Library
+        function displayBooks() {
+            const container = document.getElementById('book-container');
+
+            container.innerHTML = books.map(book => `
+                <div class="book-card">
+                    <small>${book.genre}</small>
+                    <h3>${book.title}</h3>
+                    <p>By ${book.author}</p>
+                    <button class="btn-add" onclick="addToBucket(${book.id})">Add to Bucket List</button>
+                </div>
+            `).join('');
+        }
+
+        // 4. Bucket List Logic
+        function addToBucket(bookId) {
+            const book = books.find(b => b.id === bookId);
+
+            if (!bucketList.some(item => item.id === bookId)) {
+                bucketList.push(book);
+                updateStorage();
+                alert(`${book.title} added to your list!`);
+            } else {
+                alert("Book already in your list.");
+            }
+        }
+
+        function removeFromBucket(bookId) {
+            bucketList = bucketList.filter(item => item.id !== bookId);
+            updateStorage();
+            renderBucket();
+        }
+
+        function updateStorage() {
+            localStorage.setItem('myBucketList', JSON.stringify(bucketList));
+            document.getElementById('count').innerText = bucketList.length;
+        }
+
+        function renderBucket() {
+            const container = document.getElementById('bucket-list-container');
+            document.getElementById('count').innerText = bucketList.length;
+
+            if (bucketList.length === 0) {
+                container.innerHTML = "<p>Your list is empty. Go browse some books!</p>";
+                return;
+            }
+
+            container.innerHTML = bucketList.map(item => `
+                <div class="bucket-item">
+                    <div>
+                        <strong>${item.title}</strong><br>
+                        <small>${item.author}</small>
+                    </div>
+                    <button class="btn-remove" onclick="removeFromBucket(${item.id})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        // Initial Setup
+        displayBooks();
+        renderBucket();
+
+        // Refresh bucket list when profile button is clicked
+        document.querySelectorAll('.nav-links button')[2]
+            .addEventListener('click', renderBucket);
+    </script>
+
+</body>
+</html>
